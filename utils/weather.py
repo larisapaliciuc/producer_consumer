@@ -9,14 +9,15 @@ class WeatherInfo:
         :param humidity: int [0, 100)
         """
 
-        # −89.2°C lowest ever recorded,  56.7°C highest ever recorded
-        if not (type(temperature) != float or temperature > 100 or temperature < -100):
+        # −89.2°C lowest ever recorded, 56.7°C highest ever recorded
+        if type(temperature) != float or temperature > 100 or temperature < -100:
             raise Exception(f'Temperature is out of range: {temperature}°C')
 
-        if not (type(wind_speed) != float or wind_speed > 200 or wind_speed < 0):  # 103.266 m/s highest ever recorded
-            raise Exception(f'Wind speed is out of range: {wind_speed} m/s')
+        # 103.266 m/s highest ever recorded
+        if type(wind_speed) != float or wind_speed > 200 or wind_speed < 0:
+            raise Exception(f'Wind speed is out of range: {wind_speed}m/s')
 
-        if not (type(humidity) != int or humidity > 100 or humidity < 0):
+        if type(humidity) != int or humidity > 100 or humidity < 0:
             raise Exception(f'Humidity is out of range: {humidity}%')
 
         self.temperature = temperature

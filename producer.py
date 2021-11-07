@@ -17,15 +17,27 @@ __status__ = 'Beta'
 
 import datetime
 import time
-import logging
 import requests
-import traceback
-from weather import WeatherInfo
+import configparser
+from multiprocessing import shared_memory
+from utils.weather import WeatherInfo
 
-sleep_time = 60 * 60  # 1h
-city_name = 'London'
-api_key = '7b9503e2075e80031043cb28f5741d98'
-api_call_url = f'api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&lang=en&units=metric'
+
+def load_config(ini_path='settings.ini'):
+    config = configparser.ConfigParser()
+    config.read(ini_path)
+
+    global city_name
+    city_name = config['GLOBAL']['CITY_NAME']
+
+    global shared_memory_name
+    shared_memory_name = config['GLOBAL']['SHARED_MEMORY_NAME']
+
+    global sleep_time
+    sleep_time = int(config['PRODUCER']['SLEEP_TIME'])
+
+    global api_key
+    api_key = config['PRODUCER']['API_KEY']
 
 
 def retrieve_weather_data():
@@ -36,6 +48,7 @@ def retrieve_weather_data():
     weather_data = None
 
     try:
+        api_call_url = f'api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&lang=en&units=metric'
         response_json = requests.get(api_call_url).json()
 
         if response_json['cod'] != 200:  # OK
@@ -63,22 +76,23 @@ def retrieve_weather_data():
     return weather_data
 
 
-def write_in_shared_memory(data):
-    pass
-    # put lock on shared memory
-    # write in shared memory
-    # release lock
+def write_in_shared_memory(data, is_first_iteration):
+    with shared_memory.SharedMemory(name=shared_memory_name, create=is_first_iteration, size=5) as shm:
+        shm.buf = data
 
 
 def main():
-    # load config, init
+    load_config()
+
+    is_first_iteration = True
     while True:
         start_time = datetime.datetime.now()
 
         weather_data = retrieve_weather_data()
 
         if weather_data:
-            write_in_shared_memory(weather_data)
+            write_in_shared_memory(weather_data, is_first_iteration)
+            is_first_iteration = False
 
         cycle_duration = (datetime.datetime.now() - start_time).seconds
         if cycle_duration > sleep_time:
