@@ -1,5 +1,5 @@
-"""Producer like component that retrieves weather data from a public API and feeds it via IPC shared memory to a
-consumer component."""
+"""Producer like component that retrieves weather data from a public API and feeds it via IPC shared memory
+(multiprocessing.Queue()) to a consumer component."""
 
 import time
 import datetime
@@ -34,7 +34,11 @@ class Producer:
         """Writes the WeatherInfo class in queue.
         :param queue: multiprocessing.Queue
         """
-        self.log = get_logger('producer', 'logs')
+
+        if type(queue) is not multiprocessing.queues.Queue:
+            raise TypeError('Parameter queue must be of type multiprocessing.Queue.')
+
+        self.log = get_logger(f'producer_{os.getpid()}', 'logs')
         self.log.info('Process started')
 
         while True:
@@ -69,11 +73,7 @@ class Producer:
             if response_json['cod'] != 200:  # OK
                 raise Exception(f'[Bad request] code:{response_json["cod"]}')
 
-            # todo: remove after testing
-            import random
-            temperature = response_json['main']['temp'] + random.random()
-
-            # temperature = response_json['main']['temp']
+            temperature = response_json['main']['temp']
             wind_speed = response_json['wind']['speed']
             humidity = response_json['main']['humidity']
 

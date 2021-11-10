@@ -18,14 +18,20 @@ class WeatherInfo:
         """
 
         # −89.2°C lowest ever recorded, 56.7°C highest ever recorded
-        if not isinstance(temperature, (int, float)) or temperature > 100 or temperature < -100:
+        if not isinstance(temperature, (int, float)):
+            raise Exception(f'Temperature is not a number (int/float): {temperature}')
+        elif temperature > 100 or temperature < -100:
             raise Exception(f'Temperature is out of range: {temperature}°C')
 
         # 103.266 m/s highest ever recorded
-        if not isinstance(wind_speed, (int, float)) or wind_speed > 200 or wind_speed < 0:
+        if not isinstance(wind_speed, (int, float)):
+            raise Exception(f'Wind speed is not a number (int/float): {wind_speed}')
+        elif wind_speed > 200 or wind_speed < 0:
             raise Exception(f'Wind speed is out of range: {wind_speed}m/s')
 
-        if not isinstance(humidity, (int, float)) or humidity > 100 or humidity < 0:
+        if not isinstance(humidity, (int, float)):
+            raise Exception(f'Humidity is not a number (int/float): {humidity}')
+        elif humidity > 100 or humidity < 0:
             raise Exception(f'Humidity is out of range: {humidity}%')
 
         self.temperature = float(temperature)
@@ -45,6 +51,7 @@ class GmailClient:
         """
         if not sender.endswith('@gmail.com'):
             raise Exception('Sender address is not a Gmail address.')
+
         self.sender = sender
         self.password = password
 
@@ -75,9 +82,10 @@ def get_logger(log_name: str, logs_directory_path: str, log_max_size=1024):
     :param log_max_size: int
     :return: logging.log
     """
-    log_file_info = os.path.join(logs_directory_path, f'{log_name}.info')
-    log_file_warning = os.path.join(logs_directory_path, f'{log_name}.warn')
-    log_file_error = os.path.join(logs_directory_path, f'{log_name}.err')
+    log_file_info = os.path.join(logs_directory_path, f'{log_name}.log')
+
+    if not os.path.exists(logs_directory_path):
+        os.makedirs(logs_directory_path)
 
     log_formatter = logging.Formatter(
         '%(asctime)-19s [%(filename)s:%(lineno)s - %(funcName)s() ] [%(levelname)-s] %(message)s')
@@ -90,22 +98,10 @@ def get_logger(log_name: str, logs_directory_path: str, log_max_size=1024):
     stream_handler.setFormatter(log_formatter)
     log.addHandler(stream_handler)
 
-    # info
+    # info, warnings & errors
     handler = RotatingFileHandler(log_file_info, maxBytes=log_max_size, backupCount=3)
     handler.setFormatter(log_formatter)
     handler.setLevel(logging.INFO)
-    log.addHandler(handler)
-
-    # warning
-    handler = RotatingFileHandler(log_file_warning, maxBytes=log_max_size, backupCount=3)
-    handler.setFormatter(log_formatter)
-    handler.setLevel(logging.WARN)
-    log.addHandler(handler)
-
-    # error
-    handler = RotatingFileHandler(log_file_error, maxBytes=log_max_size, backupCount=3)
-    handler.setFormatter(log_formatter)
-    handler.setLevel(logging.ERROR)
     log.addHandler(handler)
 
     return log
